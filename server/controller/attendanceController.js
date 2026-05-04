@@ -6,9 +6,7 @@ const ActivityLog = require('../model/ActivityLog');
 
 exports.recordAttendance = async (req, res) => {
   try {
-    const { studentId, activityId, period, scanType } = req.body;
-    // scanType: 'in' for time-in, 'out' for time-out (defaults to 'in' for backward compatibility)
-    const type = scanType || 'in';
+    const { studentId, activityId, period } = req.body;
 
     const activity = await Activity.findById(activityId);
     if (!activity) {
@@ -37,6 +35,62 @@ exports.recordAttendance = async (req, res) => {
     const now = new Date();
     const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
+    // Determine if this is time-in or time-out based on current time and activity schedule
+    let isTimeIn = false;
+    let isTimeOut = false;
+    let isLateTimeIn = false;
+
+    if (period === 'AM') {
+      // Check if too early for time-in
+      if (currentTime < activity.amTimeInStart) {
+        return res.status(400).json({ 
+          message: `Too early! Time-in starts at ${activity.amTimeInStart}`,
+          code: 'TOO_EARLY'
+        });
+      }
+      // Check if current time is within time-in window
+      else if (currentTime >= activity.amTimeInStart && currentTime <= activity.amTimeInCutoff) {
+        isTimeIn = true;
+      }
+      // Check if current time is late for time-in (after cutoff but before time-out starts)
+      else if (currentTime > activity.amTimeInCutoff && currentTime < activity.amTimeOutStart) {
+        isTimeIn = true;
+        isLateTimeIn = true;
+      }
+      // Check if too early for time-out (within late time-in period)
+      else if (currentTime >= activity.amTimeOutStart && currentTime < activity.amTimeOutStart) {
+        return res.status(400).json({ 
+          message: `Too early for time-out! Time-out starts at ${activity.amTimeOutStart}`,
+          code: 'TOO_EARLY_TIMEOUT'
+        });
+      }
+      // Check if current time is within time-out window
+      else if (currentTime >= activity.amTimeOutStart && currentTime <= activity.amTimeOutCutoff) {
+        isTimeOut = true;
+      }
+    } else if (period === 'PM') {
+      // Check if too early for time-in
+      if (currentTime < activity.pmTimeInStart) {
+        return res.status(400).json({ 
+          message: `Too early! Time-in starts at ${activity.pmTimeInStart}`,
+          code: 'TOO_EARLY'
+        });
+      }
+      // Check if current time is within time-in window
+      else if (currentTime >= activity.pmTimeInStart && currentTime <= activity.pmTimeInCutoff) {
+        isTimeIn = true;
+      }
+      // Check if current time is late for time-in (after cutoff but before time-out starts)
+      else if (currentTime > activity.pmTimeInCutoff && currentTime < activity.pmTimeOutStart) {
+        isTimeIn = true;
+        isLateTimeIn = true;
+      }
+      // Check if current time is within time-out window
+      else if (currentTime >= activity.pmTimeOutStart && currentTime <= activity.pmTimeOutCutoff) {
+        isTimeOut = true;
+      }
+    }
+
     // Check if attendance record exists
     let existingAttendance = await Attendance.findOne({
       studentId,
@@ -44,70 +98,50 @@ exports.recordAttendance = async (req, res) => {
       period,
     });
 
-    if (type === 'in') {
-      // Time-in validation and status determination
-      let status = 'Absent';
+    if (isTimeIn) {
+      // TIME-IN LOGIC
+      if (existingAttendance && existingAttendance.timeIn) {
+        return res.status(400).json({ message: 'Time-in already recorded for this session' });
+      }
+
+      let status = 'Present';
       let fineAmount = 0;
       let fineReason = '';
 
-      if (period === 'AM') {
-        if (currentTime < activity.amTimeInStart) {
-          return res.status(400).json({ 
-            message: `Too early! Time-in starts at ${activity.amTimeInStart}`,
-            code: 'TOO_EARLY'
-          });
-        }
-        else if (currentTime >= activity.amTimeInStart && currentTime <= activity.amTimeInCutoff) {
-          status = 'Present';
-        } 
-        else if (currentTime > activity.amTimeInCutoff && currentTime <= activity.amTimeOutCutoff) {
+      // Determine status based on time
+      if (isLateTimeIn) {
+        status = 'Late';
+        fineAmount = activity.fines?.lateAmount || 0;
+        fineReason = `Late attendance for ${activity.name} (${period})`;
+      } else {
+        // Check if within cutoff
+        if (period === 'AM' && currentTime > activity.amTimeInCutoff) {
           status = 'Late';
           fineAmount = activity.fines?.lateAmount || 0;
           fineReason = `Late attendance for ${activity.name} (AM)`;
-        } 
-        else {
-          return res.status(400).json({ 
-            message: `Too late! Time-out cutoff was at ${activity.amTimeOutCutoff}`,
-            code: 'TOO_LATE'
-          });
-        }
-      } else if (period === 'PM') {
-        if (currentTime < activity.pmTimeInStart) {
-          return res.status(400).json({ 
-            message: `Too early! Time-in starts at ${activity.pmTimeInStart}`,
-            code: 'TOO_EARLY'
-          });
-        }
-        else if (currentTime >= activity.pmTimeInStart && currentTime <= activity.pmTimeInCutoff) {
-          status = 'Present';
-        } 
-        else if (currentTime > activity.pmTimeInCutoff && currentTime <= activity.pmTimeOutCutoff) {
+        } else if (period === 'PM' && currentTime > activity.pmTimeInCutoff) {
           status = 'Late';
           fineAmount = activity.fines?.lateAmount || 0;
           fineReason = `Late attendance for ${activity.name} (PM)`;
-        } 
-        else {
-          return res.status(400).json({ 
-            message: `Too late! Time-out cutoff was at ${activity.pmTimeOutCutoff}`,
-            code: 'TOO_LATE'
-          });
         }
       }
 
       if (existingAttendance) {
-        return res.status(400).json({ message: 'Time-in already recorded for this session' });
+        // Update existing record with time-in
+        existingAttendance.timeIn = now;
+        existingAttendance.status = status;
+        await existingAttendance.save();
+      } else {
+        // Create new attendance record
+        existingAttendance = new Attendance({
+          studentId,
+          activityId,
+          period,
+          timeIn: now,
+          status,
+        });
+        await existingAttendance.save();
       }
-
-      // Create new attendance record with time-in
-      const attendance = new Attendance({
-        studentId,
-        activityId,
-        period,
-        timeIn: now,
-        status,
-      });
-
-      await attendance.save();
 
       if (fineAmount > 0) {
         await Fine.create({
@@ -123,20 +157,54 @@ exports.recordAttendance = async (req, res) => {
         details: { studentId, activityId, status, period },
       });
 
-      res.status(201).json(attendance);
-    } else if (type === 'out') {
-      // Time-out handling
-      if (!existingAttendance) {
-        return res.status(400).json({ message: 'No check-in record found. Please check in first.' });
+      return res.status(201).json(existingAttendance);
+    } 
+    else if (isTimeOut) {
+      // TIME-OUT LOGIC
+      if (!existingAttendance || !existingAttendance.timeIn) {
+        return res.status(400).json({ 
+          message: 'No time-in record found. Please check in first.',
+          code: 'NO_TIME_IN'
+        });
       }
 
       if (existingAttendance.timeOut) {
-        return res.status(400).json({ message: 'Time-out already recorded for this session' });
+        return res.status(400).json({ 
+          message: 'Time-out already recorded for this session',
+          code: 'DUPLICATE_TIME_OUT'
+        });
+      }
+
+      // Check if time-out is late
+      let status = existingAttendance.status; // Keep existing status
+      let fineAmount = 0;
+      let fineReason = '';
+
+      if (period === 'AM') {
+        if (currentTime > activity.amTimeOutCutoff) {
+          // Late time-out
+          fineAmount = activity.fines?.lateAmount || 0;
+          fineReason = `Late time-out for ${activity.name} (AM)`;
+        }
+      } else if (period === 'PM') {
+        if (currentTime > activity.pmTimeOutCutoff) {
+          // Late time-out
+          fineAmount = activity.fines?.lateAmount || 0;
+          fineReason = `Late time-out for ${activity.name} (PM)`;
+        }
       }
 
       // Update with time-out
       existingAttendance.timeOut = now;
       await existingAttendance.save();
+
+      if (fineAmount > 0) {
+        await Fine.create({
+          studentId: student._id,
+          amount: fineAmount,
+          reason: fineReason,
+        });
+      }
 
       await ActivityLog.create({
         action: 'attendance_out',
@@ -144,7 +212,22 @@ exports.recordAttendance = async (req, res) => {
         details: { studentId, activityId, period },
       });
 
-      res.json(existingAttendance);
+      return res.json(existingAttendance);
+    } 
+    else {
+      // Not within any valid time window
+      let message = 'Not within any valid time window for this activity.';
+      
+      if (period === 'AM') {
+        message = `Current time (${currentTime}) is outside the valid windows. Time-in: ${activity.amTimeInStart}-${activity.amTimeInCutoff}, Time-out: ${activity.amTimeOutStart}-${activity.amTimeOutCutoff}`;
+      } else if (period === 'PM') {
+        message = `Current time (${currentTime}) is outside the valid windows. Time-in: ${activity.pmTimeInStart}-${activity.pmTimeInCutoff}, Time-out: ${activity.pmTimeOutStart}-${activity.pmTimeOutCutoff}`;
+      }
+      
+      return res.status(400).json({ 
+        message,
+        code: 'INVALID_TIME'
+      });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
