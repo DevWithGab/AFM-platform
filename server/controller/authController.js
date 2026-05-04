@@ -6,15 +6,12 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('Login attempt for email:', email);
-
     // Try to find user in User collection first
     let user = await User.findOne({ email });
     let role = null;
 
     if (user) {
       role = user.role; // Use the role from User model
-      console.log('Found in User collection, role:', role);
     }
 
     // If not found in User collection, try Student collection
@@ -22,18 +19,14 @@ exports.login = async (req, res) => {
       user = await Student.findOne({ email });
       if (user) {
         role = 'student';
-        console.log('Found in Student collection');
       }
     }
 
     if (!user) {
-      console.log('User not found');
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    console.log('Comparing password...');
     const isMatch = await user.comparePassword(password);
-    console.log('Password match:', isMatch);
 
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid email or password' });
