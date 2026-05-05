@@ -109,10 +109,15 @@ export const Scanner = () => {
     setTimeout(() => {
       const qrcodeContainer = document.getElementById('reader');
       if (qrcodeContainer) {
-        const buttons = qrcodeContainer.querySelectorAll('button');
-        buttons.forEach(btn => {
-          btn.style.display = 'none';
-        });
+        // Hide specific buttons by ID instead of all buttons
+        const startButton = document.getElementById('html5-qrcode-button-camera-start');
+        const stopButton = document.getElementById('html5-qrcode-button-camera-stop');
+        const fileButton = document.getElementById('html5-qrcode-button-file-selection');
+        
+        if (startButton) startButton.style.display = 'none';
+        if (stopButton) stopButton.style.display = 'none';
+        if (fileButton) fileButton.style.display = 'none';
+        
         const fileInput = qrcodeContainer.querySelector('input[type="file"]');
         if (fileInput) {
           fileInput.style.display = 'none';
@@ -190,8 +195,11 @@ export const Scanner = () => {
         }
       },
       (error) => {
-        // Ignore scanning errors (they happen continuously)
-        console.log('Scanner error:', error);
+        // Ignore scanning errors (they happen continuously when no QR code is detected)
+        // Only log if it's not a "NotFoundException" which is normal
+        if (!error.includes('NotFoundException')) {
+          console.log('Scanner error:', error);
+        }
       }
     );
 

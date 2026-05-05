@@ -66,12 +66,34 @@ code {
 }
 
 /* Hide html5-qrcode default UI elements */
-#reader button,
-#reader input[type="file"],
-#reader label {
+#reader #html5-qrcode-button-camera-start,
+#reader #html5-qrcode-button-camera-stop,
+#reader #html5-qrcode-button-file-selection,
+#reader input[type="file"] {
   display: none !important;
 }
 
 #reader__scan_region {
   position: relative;
+}
+
+/* Ensure video is visible and properly sized */
+#reader video,
+#reader__scan_region video,
+#reader__camera_selection video {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Ensure the dashboard region is visible */
+#reader__dashboard,
+#reader__dashboard_section {
+  display: block !important;
+}
+
+/* Hide only the file selection section */
+#reader__dashboard_section_fsr {
+  display: none !important;
 }
