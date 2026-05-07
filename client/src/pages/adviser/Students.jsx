@@ -5,7 +5,6 @@ import {
   Edit, 
   Search, 
   Filter, 
-  Download, 
   Loader2, 
   X, 
   UserPlus, 
@@ -326,9 +325,6 @@ export const Students = () => {
             <p className="text-slate-500 text-sm">Register, update, and manage student information.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-all text-slate-700">
-              <Download className="w-5 h-5" /> Export
-            </button>
             <button 
               onClick={() => setIsAddModalOpen(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-all"
@@ -363,7 +359,8 @@ export const Students = () => {
                 <tr className="bg-slate-50/50">
                   <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500">Student Info</th>
                   <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500">ID Number</th>
-                  <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500">Course & Year</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500">Course</th>
+                  <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500">Year</th>
                   <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500">Email</th>
                   <th className="px-6 py-4 text-xs font-medium uppercase text-slate-500 text-right">Actions</th>
                 </tr>
@@ -371,20 +368,32 @@ export const Students = () => {
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-20 text-center">
+                    <td colSpan={6} className="py-20 text-center">
                       <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
                       <p className="mt-4 text-slate-500 font-medium">Fetching students...</p>
                     </td>
                   </tr>
                 ) : filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-20 text-center">
+                    <td colSpan={6} className="py-20 text-center">
                       <p className="text-slate-500 font-medium text-lg">No students found in the system.</p>
                       <p className="text-slate-400 text-sm mt-2">Click "Add Student" to register a new student.</p>
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((student) => (
+                  filteredStudents.map((student) => {
+                    // Format year level
+                    const yearFormat = (year) => {
+                      if (!year) return 'N/A';
+                      const yearNum = parseInt(year);
+                      if (yearNum === 1) return '1st year';
+                      if (yearNum === 2) return '2nd year';
+                      if (yearNum === 3) return '3rd year';
+                      if (yearNum === 4) return '4th year';
+                      return `${year}th year`;
+                    };
+
+                    return (
                     <tr key={student._id} className="hover:bg-slate-50/50 transition-colors group text-sm">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -406,7 +415,9 @@ export const Students = () => {
                       <td className="px-6 py-4 font-mono text-slate-600 text-sm">{student.studentId || 'N/A'}</td>
                       <td className="px-6 py-4">
                         <div className="font-medium text-slate-700">{student.course || 'N/A'}</div>
-                        <div className="text-xs text-slate-400">{student.year ? `${student.year} Year` : 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-slate-600">{yearFormat(student.year)}</div>
                       </td>
                       <td className="px-6 py-4 text-slate-500 text-sm">{student.email || 'N/A'}</td>
                       <td className="px-6 py-4 text-right">
@@ -435,7 +446,8 @@ export const Students = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -502,14 +514,18 @@ export const Students = () => {
 
                     <div className="space-y-2">
                       <label className="font-medium text-slate-700">Course</label>
-                      <input
-                        type="text"
+                      <select
                         required
                         value={formData.course}
                         onChange={(e) => setFormData({...formData, course: e.target.value})}
-                        placeholder="BSEMC"
                         className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
+                      >
+                        <option value="">Select Course</option>
+                        <option value="BSIT">BSIT</option>
+                        <option value="BSCS">BSCS</option>
+                        <option value="BSINFOTECH">BSINFOTECH</option>
+                        <option value="BSHM">BSHM</option>
+                      </select>
                     </div>
 
                     <div className="space-y-2">
@@ -702,14 +718,18 @@ export const Students = () => {
 
                     <div className="space-y-2">
                       <label className="font-medium text-slate-700">Course</label>
-                      <input
-                        type="text"
+                      <select
                         required
                         value={formData.course}
                         onChange={(e) => setFormData({...formData, course: e.target.value})}
-                        placeholder="BSEMC"
                         className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
+                      >
+                        <option value="">Select Course</option>
+                        <option value="BSIT">BSIT</option>
+                        <option value="BSCS">BSCS</option>
+                        <option value="BSINFOTECH">BSINFOTECH</option>
+                        <option value="BSHM">BSHM</option>
+                      </select>
                     </div>
 
                     <div className="space-y-2">

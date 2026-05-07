@@ -34,13 +34,14 @@ export const AdviserOverview = () => {
         ]);
 
         const activeActivitiesList = activities.filter((a) => a.isActive);
-        const unpaidFines = fines.filter((f) => !f.isPaid).length;
+        const unpaidFinesCount = fines.filter((f) => !f.isPaid).length;
+        const totalFinesAmount = fines.reduce((sum, fine) => sum + fine.amount, 0);
 
         setStats({
           totalStudents: studentsData.length,
           activeActivities: activeActivitiesList.length,
-          totalFines: fines.length,
-          unpaidFines,
+          totalFines: totalFinesAmount,
+          unpaidFines: unpaidFinesCount,
         });
 
         setStudents(studentsData);
@@ -78,8 +79,8 @@ export const AdviserOverview = () => {
 
   const cards = [
     { label: 'Total Students', value: stats.totalStudents, icon: Users, color: 'text-primary', bg: 'bg-primary/5' },
-    { label: 'Total Activities', value: stats.activeActivities, icon: Calendar, color: 'text-primary', bg: 'bg-primary/5' },
-    { label: 'Present Today', value: stats.presentToday || 0, icon: CheckCircle, color: 'text-primary', bg: 'bg-primary/5' },
+    { label: 'Active Activities', value: stats.activeActivities, icon: Calendar, color: 'text-primary', bg: 'bg-primary/5' },
+    { label: 'Total Fines', value: `₱${stats.totalFines}`, icon: PesoIcon, color: 'text-primary', bg: 'bg-primary/5' },
     { label: 'Unpaid Fines', value: stats.unpaidFines, icon: AlertTriangle, color: 'text-primary', bg: 'bg-primary/5' },
   ];
 

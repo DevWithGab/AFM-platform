@@ -51,10 +51,16 @@ export const Activities = () => {
     
     try {
       await activityService.createActivity(formData);
+      
+      const fineAmount = formData.fines.absentAmount;
+      const message = fineAmount > 0 
+        ? `Activity created successfully! Fines of ₱${fineAmount} have been assigned to all students.`
+        : 'Activity created successfully!';
+      
       Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: 'Activity created successfully',
+        text: message,
         confirmButtonColor: '#16a34a',
       });
       setIsModalOpen(false);
@@ -240,6 +246,19 @@ export const Activities = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Fine Amount Display */}
+                  {activity.fines?.absentAmount > 0 && (
+                    <div className="p-3 bg-red-50 rounded-lg border border-red-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-red-900">
+                          <PesoIcon className="w-3.5 h-3.5" />
+                          <span className="font-bold">Absent Fine:</span>
+                        </div>
+                        <span className="font-bold text-red-700">₱{activity.fines.absentAmount}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">
@@ -421,6 +440,37 @@ export const Activities = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Fine Amount Section */}
+                  <div className="space-y-3 p-4 bg-red-50 rounded-xl border border-red-100">
+                    <div className="flex items-center gap-2">
+                      <PesoIcon className="w-4 h-4 text-red-600" />
+                      <div className="text-sm font-bold text-red-900">Absent Fine Amount</div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-slate-600">
+                        Fine per missed time-in/time-out (₱)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">₱</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={formData.fines.absentAmount}
+                          onChange={(e) => setFormData({
+                            ...formData, 
+                            fines: { ...formData.fines, absentAmount: Number(e.target.value) }
+                          })}
+                          placeholder="0"
+                          className="w-full pl-8 pr-4 py-2.5 rounded-lg bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Students will be fined this amount for each missed time-in or time-out. Set to 0 for no fines.
+                      </p>
+                    </div>
                   </div>
 
                   <button

@@ -376,10 +376,9 @@ export const StudentOverview = () => {
                 </div>
                 <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3 text-slate-900">Attendance Policy</h3>
                 <p className="text-slate-500 font-medium text-xs lg:text-sm leading-relaxed">
-                  Each missed session (AM/PM) without a valid excuse will result in a ₱50.00 fine. Multiple offenses may lead to further disciplinary action.
+                  Students are automatically marked absent for all activities. Scan your QR code during time-in and time-out windows to mark yourself present and avoid fines. Fine amounts vary per activity.
                 </p>
               </div>
-
             </div>
           </div>
         </div>

@@ -7,6 +7,11 @@ const fineSchema = new mongoose.Schema(
       ref: 'Student',
       required: true,
     },
+    activityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Activity',
+      default: null,
+    },
     amount: {
       type: Number,
       required: true,
@@ -14,6 +19,16 @@ const fineSchema = new mongoose.Schema(
     reason: {
       type: String,
       required: true,
+    },
+    period: {
+      type: String,
+      enum: ['AM', 'PM'],
+      default: null,
+    },
+    scanType: {
+      type: String,
+      enum: ['in', 'out'],
+      default: null,
     },
     isPaid: {
       type: Boolean,

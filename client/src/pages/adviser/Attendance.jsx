@@ -228,8 +228,6 @@ export const Attendance = () => {
     switch (status) {
       case 'Present':
         return 'bg-green-100 text-green-700 border-green-200';
-      case 'Late':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'Absent':
         return 'bg-red-100 text-red-700 border-red-200';
       default:
@@ -241,8 +239,6 @@ export const Attendance = () => {
     switch (status) {
       case 'Present':
         return <CheckCircle className="w-3.5 h-3.5" />;
-      case 'Late':
-        return <Clock className="w-3.5 h-3.5" />;
       case 'Absent':
         return <XCircle className="w-3.5 h-3.5" />;
       default:
@@ -282,7 +278,6 @@ export const Attendance = () => {
   const isFullDay = selectedActivityObj?.period === 'Full Day';
   
   let totalPresent = 0;
-  let totalLate = 0;
   let totalAbsent = 0;
 
   students.forEach(student => {
@@ -292,7 +287,6 @@ export const Attendance = () => {
     if (!isPMOnly) {
       const amStatus = studentAttendance.AM_IN?.status;
       if (amStatus === 'Present') totalPresent++;
-      else if (amStatus === 'Late') totalLate++;
       else totalAbsent++; // No record or Absent status = Absent
     }
     
@@ -300,7 +294,6 @@ export const Attendance = () => {
     if (!isAMOnly) {
       const pmStatus = studentAttendance.PM_IN?.status;
       if (pmStatus === 'Present') totalPresent++;
-      else if (pmStatus === 'Late') totalLate++;
       else totalAbsent++; // No record or Absent status = Absent
     }
   });
@@ -324,7 +317,7 @@ export const Attendance = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -345,23 +338,6 @@ export const Attendance = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white p-4 lg:p-6 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-          >
-            <div className="flex items-center gap-3 lg:gap-4">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-50 rounded-lg flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-600" />
-              </div>
-              <div>
-                <div className="text-xs font-medium text-slate-500 uppercase">Late</div>
-                <div className="text-xl lg:text-2xl font-bold text-slate-900">{totalLate}</div>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
             className="bg-white p-4 lg:p-6 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
           >
             <div className="flex items-center gap-3 lg:gap-4">

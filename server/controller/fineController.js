@@ -3,7 +3,9 @@ const Student = require('../model/Student');
 
 exports.getAllFines = async (req, res) => {
   try {
-    const fines = await Fine.find().populate('studentId', 'name email studentId photo');
+    const fines = await Fine.find()
+      .populate('studentId', 'name email studentId photo')
+      .populate('activityId', 'name date period');
     res.json(fines);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -12,7 +14,9 @@ exports.getAllFines = async (req, res) => {
 
 exports.getFineById = async (req, res) => {
   try {
-    const fine = await Fine.findById(req.params.id).populate('studentId', 'name email studentId photo');
+    const fine = await Fine.findById(req.params.id)
+      .populate('studentId', 'name email studentId photo')
+      .populate('activityId', 'name date period');
     if (!fine) {
       return res.status(404).json({ message: 'Fine not found' });
     }
@@ -38,7 +42,9 @@ exports.createFine = async (req, res) => {
     });
 
     await fine.save();
-    const populatedFine = await Fine.findById(fine._id).populate('studentId', 'name email studentId photo');
+    const populatedFine = await Fine.findById(fine._id)
+      .populate('studentId', 'name email studentId photo')
+      .populate('activityId', 'name date period');
     res.status(201).json(populatedFine);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -49,7 +55,9 @@ exports.updateFine = async (req, res) => {
   try {
     const fine = await Fine.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-    }).populate('studentId', 'name email studentId photo');
+    })
+      .populate('studentId', 'name email studentId photo')
+      .populate('activityId', 'name date period');
 
     if (!fine) {
       return res.status(404).json({ message: 'Fine not found' });
@@ -81,7 +89,9 @@ exports.markAsPaid = async (req, res) => {
       req.params.id,
       { isPaid: true, paidDate: new Date() },
       { new: true }
-    ).populate('studentId', 'name email studentId photo');
+    )
+      .populate('studentId', 'name email studentId photo')
+      .populate('activityId', 'name date period');
 
     if (!fine) {
       return res.status(404).json({ message: 'Fine not found' });
